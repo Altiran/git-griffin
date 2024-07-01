@@ -1,0 +1,42 @@
+name: Build
+
+on:
+    push:
+        branches:
+            - 'main'
+            - 'renovate/*'
+        tags:
+            - 'v*' # For v1.0, v0.1.0, etc
+    pull_request:
+        branches:
+            - 'main'
+    schedule:
+        -   cron: '0 0 * * *'
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ format('{0}-{1}', github.job, github.ref) }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+        steps:
+            -   name: Checkout code
+                uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+            -   name: Create out directory
+                run: mkdir -p out
+
+            -   name: Make
+                run: make
+
+            -   name: Upload Build Results
+                uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+                with:
+                    name: Build Results (on ${{ matrix.os }})
+                    path: ${{ github.workspace }}/out/
